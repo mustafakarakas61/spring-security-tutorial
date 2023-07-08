@@ -1,19 +1,28 @@
 package com.mustafa.springsecurity.config;
 
+import com.mustafa.springsecurity.enm.EnmRole;
+import com.mustafa.springsecurity.service.impl.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 
+@Configuration
 @EnableWebSecurity
 public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
 
-/*    *//**
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
+
+    /**
      Bu metot, HTTP güvenlik yapılandırmasını yapılandırmak için kullanılır.
      HttpSecurity nesnesi, HTTP istekleri üzerindeki yetkilendirme, kimlik doğrulama ve diğer güvenlik ayarlarını yapılandırmak için kullanılır.
-     *//*
+     */
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests() // Bu metot, yapılandırmanın istek yetkilendirme ayarlarını başlatır.
@@ -25,20 +34,31 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
                 .permitAll() // Giriş sayfasına herkese erişim izni verir.
                 .and()
                 .logout() // Oturum kapatma işlemini yapılandırır.
-                .permitAll(); // Oturum kapatma işlemine herkese erişim izni verir.
+                .permitAll() // Oturum kapatma işlemine herkese erişim izni verir.
+                .and()
+                .csrf().disable()
+                .cors();
+
+        http.userDetailsService(userDetailsService);
     }
 
-    *//**
-     Bu metot, kimlik doğrulama yapılandırmasını yapılandırmak için kullanılır.
-     AuthenticationManagerBuilder nesnesi, kimlik doğrulama yöntemlerini ve kullanıcı bilgilerini yapılandırmak için kullanılır.
-     *//*
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth
-                .inMemoryAuthentication() // Bellekte kullanıcı bilgilerini tutarak kimlik doğrulama yapılacağını belirtir.
-                .withUser("admin").password("{noop}password").roles("ADMIN") // "admin" kullanıcısını ve şifresini belirler. {noop} öneki, şifrenin doğrudan depolanacağını ve şifreleme kullanılmayacağını belirtir. "admin" kullanıcısının "ADMIN" rolüne sahip olduğu belirtilir.
+/*    @Override
+    public void configure(HttpSecurity http) throws Exception {
+        http.csrf().disable()
+                .authorizeRequests()
+                .antMatchers(HttpMethod.POST, "/api/**")
+                .hasRole(EnmRole.ADMIN.name())
+                .anyRequest()
+                .authenticated()
                 .and()
-                .withUser("user").password("{noop}password").roles("USER"); // "user" kullanıcısını ve şifresini belirler. "user" kullanıcısının "USER" rolüne sahip olduğu belirtilir.
-    }*/
+                .httpBasic();
+
+        http.userDetailsService(userDetailsService);
+    }*/ // todo : swagger post neden olmuyor?
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
 }
